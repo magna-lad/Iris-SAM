@@ -40,7 +40,7 @@ def train(args):
     checkpoint = 'weights/sam_vit_h_4b8939.pth'
     
     sam_model = sam_model_registry[model_type](checkpoint=checkpoint)
-    device = "cuda:2" if torch.cuda.is_available() else "cpu"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     
     sam_model.to(device)
     sam_model.train()
