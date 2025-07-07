@@ -34,17 +34,43 @@ class SAMDataset(Dataset):
         self.images = []
         self.masks = []
         
-        for image_name in image_names:
-            image_path = os.path.join(image_dir, image_name)
-            mask_path = os.path.join(mask_dir, image_name)  # No renaming needed since both have .jpg extension
-            
-            if not os.path.exists(mask_path):
-                print(f"Warning: Corresponding mask for image {image_name} not found. Skipping...")
-                continue
-
-            self.images.append(image_path)
-            self.masks.append(mask_path)
+        numbered_folders = sorted(
+            [folder for folder in os.listdir(image_dir) if os.path.isdir(os.path.join(image_dir, folder))],
+            key=lambda x: int(x))
         
+        for numbered_folder in numbered_folders:
+            numbered_folder_image_path = os.path.join(image_dir, numbered_folder)
+            numbered_folder_mask_path = os.path.join(mask_dir, numbered_folder)
+            
+            if not os.path.isdir(numbered_folder_image_path):
+                continue
+        
+            for l_r in sorted(os.listdir(numbered_folder_image_path)):  # 'l' or 'r'
+                l_r_image_path = os.path.join(numbered_folder_image_path, l_r)
+                l_r_mask_path = os.path.join(numbered_folder_mask_path, l_r)
+        
+                if not os.path.isdir(l_r_image_path):
+                    continue
+        
+                for f in sorted(os.listdir(l_r_image_path)):
+                    if not f.lower().endswith(('.jpg', '.jpeg', '.png')):
+                        continue  # skip non-image files
+        
+                    # Full image path
+                    image_path = os.path.join(image_dir, numbered_folder, l_r, f)
+        
+                    # Derive corresponding mask name (.png)
+                    base_filename = os.path.splitext(f)[0]  # e.g., S1001L01
+                    mask_path = os.path.join(mask_dir, numbered_folder, l_r, base_filename + '.png')
+        
+                    if not os.path.exists(mask_path):
+                        print(f" Warning: Corresponding mask for image {f} not found. Skipping...")
+                        continue
+        
+                    self.images.append(image_path)
+                    self.masks.append(mask_path)
+
+        # to be decided after testing
         # Convert to numpy arrays for possible efficiency reasons (can be kept as lists if preferred)
         self.images = np.array(self.images)
         self.masks = np.array(self.masks)
